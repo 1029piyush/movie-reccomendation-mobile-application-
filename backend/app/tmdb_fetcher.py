@@ -19,16 +19,6 @@ def get_conn():
     return sqlite3.connect(DB_PATH)
 
 
-def fetch_popular_movies(page):
-    url = f"{BASE_URL}/movie/popular"
-    params = {
-        "api_key": API_KEY,
-        "language": "en-US",
-        "page": page
-    }
-    response = requests.get(url, params=params, timeout=15)
-    response.raise_for_status()
-    return response.json()["results"]
 
 
 def insert_movie(movie):
@@ -48,6 +38,19 @@ def insert_movie(movie):
             movie.get("poster_path", "")
         ))
         conn.commit()
+
+def fetch_popular_movies(page):
+    response = requests.get(
+        f"{BASE_URL}/movie/popular",
+        params={
+            "api_key": API_KEY,
+            "language": "en-US",
+            "page": page
+        },
+        timeout=10
+    )
+    response.raise_for_status()
+    return response.json().get("results", [])
 
 
 def bulk_load_movies(start_page=1, end_page=5):
