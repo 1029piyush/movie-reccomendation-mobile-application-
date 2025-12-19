@@ -45,7 +45,10 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, title: const Text("Search")),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text("Search"),
+      ),
       body: Column(
         children: [
           Padding(
@@ -66,18 +69,29 @@ class _SearchScreenState extends State<SearchScreen> {
               onChanged: search,
             ),
           ),
+
           if (loading)
             const Padding(
               padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(color: Colors.white),
             ),
-          if (!loading)
+
+          if (!loading && results.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                "No movies found",
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+
+          if (!loading && results.isNotEmpty)
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.all(12),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 3,
-                  childAspectRatio: 2 / 3,
+                  childAspectRatio: 0.58, // IMPORTANT FIX
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
                 ),
@@ -88,29 +102,58 @@ class _SearchScreenState extends State<SearchScreen> {
 
                   return GestureDetector(
                     onTap: () {
-  if (movie["id"] != null) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MovieDetailScreen(movieId: movie["id"]),
-      ),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Details coming soon"),
-      ),
-    );
-  }
-},
-
-                    child: poster != null
-                        ? Image.network(poster, fit: BoxFit.cover)
-                        : Container(
-                            color: Colors.grey.shade800,
-                            child: const Icon(Icons.movie,
-                                color: Colors.white),
+                      if (movie["id"] != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                MovieDetailScreen(movieId: movie["id"]),
                           ),
+                        );
+                      } else if (movie["tmdb_id"] != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                MovieDetailScreen(tmdbId: movie["tmdb_id"]),
+                          ),
+                        );
+                      }
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: poster != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Image.network(
+                                    poster,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                  ),
+                                )
+                              : Container(
+                                  color: Colors.grey.shade800,
+                                  child: const Icon(
+                                    Icons.movie,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          movie["title"] ?? "",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
