@@ -353,36 +353,20 @@ def get_related_movies(movie_id: int):
     }
     cur = conn.cursor()
 
-    # Get overview
+    # Get current movie overview
     cur.execute("SELECT overview FROM movies WHERE id = ?", (movie_id,))
     movie = cur.fetchone()
 
-    related = []
+    # Fallback-safe logic
+    cur.execute("""
+        SELECT id, title, overview, poster_path
+        FROM movies
+        WHERE id != ?
+        ORDER BY RANDOM()
+        LIMIT 10
+    """, (movie_id,))
 
-    if movie and movie["overview"]:
-        keyword = movie["overview"].split(" ")[0]
-
-        cur.execute("""
-            SELECT id, title, overview, poster_path
-            FROM movies
-            WHERE overview LIKE ?
-            AND id != ?
-            LIMIT 10
-        """, (f"%{keyword}%", movie_id))
-
-        related = cur.fetchall()
-
-    # 🔁 FALLBACK (IMPORTANT)
-    if not related:
-        cur.execute("""
-            SELECT id, title, overview, poster_path
-            FROM movies
-            WHERE id != ?
-            ORDER BY RANDOM()
-            LIMIT 10
-        """, (movie_id,))
-        related = cur.fetchall()
-
+    rows = cur.fetchall()
     conn.close()
 
     return [
@@ -395,5 +379,5 @@ def get_related_movies(movie_id: int):
                 if r["poster_path"] else None
             )
         }
-        for r in related
+        for r in rows
     ]
